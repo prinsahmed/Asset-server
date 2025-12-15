@@ -29,6 +29,7 @@ async function run() {
         const dataBase = client.db('assetDB');
         const usersCollection = dataBase.collection('usersCollection')
         const assetCollection = dataBase.collection('assetCollection')
+        const requestCollection = dataBase.collection('requestCollection')
 
 
         app.post('/user-employee', async (req, res) => {
@@ -67,7 +68,7 @@ async function run() {
 
         app.get('/all-asset', async (req, res) => {
             const search = req.query.search?.trim();
-            
+
 
             let query = {};
 
@@ -82,13 +83,13 @@ async function run() {
             res.send(result);
         });
 
-        app.get('/all-asset/:id', async(req, res) => {
-            const {id} = req.params;
-            
-             if (!id || !ObjectId.isValid(id)) {
+        app.get('/all-asset/:id', async (req, res) => {
+            const { id } = req.params;
+
+            if (!id || !ObjectId.isValid(id)) {
                 return res.status(400).send({ success: false, message: "Invalid ID" });
             }
-            const query = {_id: new ObjectId(id)}
+            const query = { _id: new ObjectId(id) }
             const result = await assetCollection.findOne(query);
             res.send(result);
 
@@ -105,18 +106,44 @@ async function run() {
             res.send(result);
         })
 
-//         app.patch('/all-asset/edit/:id', async (req, res) => {
-//             const { id } = req.params;
-// console.log(id);
-//             if (!id || !ObjectId.isValid(id)) {
-//                 return res.status(400).send({ success: false, message: "Invalid ID" });
-//             }
+        app.put('/all-asset/edit/:id', async (req, res) => {
+            const { id } = req.params;
+            const editedProduct = req.body
 
-//             const query = {_id: new ObjectId(id)};
-//             const result = await assetCollection.updateOne(query);
-//             res.send(result);
-//         })
+            if (!id || !ObjectId.isValid(id)) {
+                return res.status(400).send({ success: false, message: "Invalid ID" });
+            }
 
+            const query = { _id: new ObjectId(id) };
+            const update = { $set: editedProduct }
+            const result = await assetCollection.updateOne(query, update);
+            res.send(result);
+        })
+
+        app.get('/all-requests', async (req, res) => {
+            const result = await requestCollection.find().toArray();
+            res.send(result);
+        })
+
+        app.patch('/asset-approval/:id', async (req, res) => {
+            const requestStatus = req.body;
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const update = { $set: requestStatus }
+            const result = await requestCollection.updateOne(query, update);
+            res.send(result);
+
+        })
+
+        app.patch('/asset-reject/:id', async (req, res) => {
+            const requestStatus = req.body;
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const update = { $set: requestStatus }
+            const result = await requestCollection.updateOne(query, update);
+            res.send(result);
+
+        })
 
 
 
