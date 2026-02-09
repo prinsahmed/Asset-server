@@ -25,7 +25,7 @@ const verifyToken = (req, res, next) => {
         if (err) {
             return res.status(403).send({ message: 'forbidden access' });
         }
-        console.log(decoded);
+
         req.token_email = decoded.email
         next()
     });
@@ -176,12 +176,6 @@ async function run() {
                 const result = await usersCollection.insertOne(HRData);
                 res.send(result);
 
-                const HRId = result.insertedId;
-                const companyResult = {
-                    createdBy: HRId,
-                    companyName: HRData.companyName
-                }
-                const comapnyResult = await companyCollection.insertOne(companyResult)
             }
         })
 
@@ -254,7 +248,7 @@ async function run() {
         })
 
         app.put('/asset-approval/:id', verifyToken, verifyHR, async (req, res) => {
-            const { requestStatus } = req.body;
+            const { requestStatus, productId } = req.body;
             const id = req.params.id;
             const query = { _id: new ObjectId(id), hrEmail: req.token_email };
             const update = {
@@ -263,6 +257,14 @@ async function run() {
                     approvalDate: new Date()
                 }
             }
+            const productQuery = {
+                _id: new ObjectId(productId),
+                productQuantity: { $gt: 0 }
+            };
+            const assetCountUpdate = await assetCollection.updateOne(productQuery, { $inc: { productQuantity: -1 } })
+            console.log(productQuery);
+
+
             const result = await assetRequestCollection.updateOne(query, update);
             res.send(result);
 
@@ -307,26 +309,20 @@ async function run() {
 
         })
 
-        app.get('/user-role', verifyToken, async (req, res) => {
-            const userEmail = req.query.email;
 
-            const query = {}
-            if (userEmail) {
-                query.email = userEmail;
-            }
-            const result = await usersCollection.findOne(query);
-            res.send(result?.role || '')
-        })
-
-        app.get('/user-company', verifyToken, async (req, res) => {
+        app.get('/user-data', verifyToken, async (req, res) => {
             const email = req.query.email;
             const query = {}
             if (email) {
                 query.email = email;
             }
+            const options = {
+                projection: { password: 0 }
+            }
+
             if (email !== req.token_email) return res.status(403).send({ message: 'forbidden access' })
-            const result = await usersCollection.findOne(query);
-            res.send(result.companyName)
+            const result = await usersCollection.findOne(query, options);
+            res.send(result)
 
         })
 
@@ -383,6 +379,25 @@ async function run() {
             result = await usersCollection.updateOne(query, update);
             res.send(result)
         })
+
+
+
+        app.post('/profile-update', async (req, res) => {
+            const email = req.query.email;
+            const userData = req.body
+            const query = {}
+            if(email){
+                query.email = email
+            }
+            console.log(email,userData);
+            const update ={
+                $set:userData
+            }
+            const result = await usersCollection.updateMany(query,update)
+            res.send(result)
+        })
+
+
 
 
         await client.db("admin").command({ ping: 1 });
