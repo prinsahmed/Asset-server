@@ -1,15 +1,15 @@
 const express = require('express');
 const app = express()
+require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_KEY)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
-require('dotenv').config();
 const PORT = 2500;
 const jwt = require('jsonwebtoken');
 
 // middle wares
 app.use(cors())
 app.use(express.json())
-
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -54,7 +54,7 @@ async function run() {
         const usersCollection = dataBase.collection('usersCollection')
         const assetCollection = dataBase.collection('assetCollection')
         const assetRequestCollection = dataBase.collection('assetRequestCollection')
-        const companyCollection = dataBase.collection('companyCollection')
+        const packageCollection = dataBase.collection('packageCollection')
         const employeeRequestsCollection = dataBase.collection('employeeRequestsCollection')
 
         // role verification
@@ -386,18 +386,92 @@ async function run() {
             const email = req.query.email;
             const userData = req.body
             const query = {}
-            if(email){
+            if (email) {
                 query.email = email
             }
-            console.log(email,userData);
-            const update ={
-                $set:userData
+            console.log(email, userData);
+            const update = {
+                $set: userData
             }
-            const result = await usersCollection.updateMany(query,update)
+            const result = await usersCollection.updateMany(query, update)
             res.send(result)
         })
 
+        // package api
 
+        app.get('/upgrade-package', async (req, res) => {
+            const result = await packageCollection.find().toArray()
+            res.send(result)
+        })
+
+        // payment apis 
+
+        app.post('/create-checkout-session', async (req, res) => {
+            const { id, email } = req.body;
+            if (!id || !email) return res.status(404).send({ message: 'Not Found' })
+
+            const query = { _id: new ObjectId(id) }
+            const packageData = await packageCollection.findOne(query)
+            const session = await stripe.checkout.sessions.create({
+                line_items: [
+                    {
+                        price_data: {
+                            currency: 'USD',
+                            unit_amount: packageData.price * 100,
+                            product_data: {
+                                name: packageData.name
+                            }
+                        },
+                        quantity: 1
+                    },
+                ],
+                metadata: {
+                    packageName: packageData.name,
+                    packageLimit: packageData.employeeLimit
+                },
+                customer_email: email,
+                mode: 'payment',
+                success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.SITE_DOMAIN}/payment-cancel`,
+            });
+
+
+            res.send({ url: session.url })
+        });
+
+        app.get('/payment-status', async (req, res) => {
+            const sessionId = req.query.session_id
+            if (sessionId) {
+                const session = await stripe.checkout.sessions.retrieve(sessionId)
+
+                const paymentData = {
+                    userName: session.customer_details.name,
+                    userEmail: session.customer_details.email,
+                    paymentStatus: session.payment_status,
+                    packageName: session.metadata.packageName,
+                    packageLimit: parseInt(session.metadata.packageLimit),
+                    packageAmount: session.amount_total,
+                    transactionId: session.payment_intent
+                }
+
+
+                if (session.payment_status === 'paid') {
+                    const query = {
+                        email: session.customer_details.email,
+                        processedSessions: { $ne: sessionId }
+                    }
+
+                    const update = {
+                        $inc: { packageLimit: parseInt(session.metadata.packageLimit) },
+                        $set: { subscription: session.metadata.packageName },
+                        $push: { processedSessions: sessionId }
+                    }
+                    const updateLimit = await usersCollection.updateOne(query, update)
+                    
+                }
+                res.send(paymentData)
+            }
+        })
 
 
         await client.db("admin").command({ ping: 1 });
