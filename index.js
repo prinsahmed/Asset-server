@@ -4,8 +4,9 @@ require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_KEY)
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
-const PORT = 2500;
 const jwt = require('jsonwebtoken');
+
+
 
 // middle wares
 app.use(cors())
@@ -49,7 +50,7 @@ async function run() {
 
     try {
 
-        await client.connect();
+        // await client.connect();
         const dataBase = client.db('assetDB');
         const usersCollection = dataBase.collection('usersCollection')
         const assetCollection = dataBase.collection('assetCollection')
@@ -406,7 +407,7 @@ async function run() {
 
         // payment apis 
 
-        app.post('/create-checkout-session', async (req, res) => {
+        app.post('/create-checkout-session', verifyToken, verifyHR, async (req, res) => {
             const { id, email } = req.body;
             if (!id || !email) return res.status(404).send({ message: 'Not Found' })
 
@@ -439,7 +440,7 @@ async function run() {
             res.send({ url: session.url })
         });
 
-        app.get('/payment-status', async (req, res) => {
+        app.get('/payment-status', verifyToken, verifyHR, async (req, res) => {
             const sessionId = req.query.session_id
             if (sessionId) {
                 const session = await stripe.checkout.sessions.retrieve(sessionId)
@@ -467,15 +468,23 @@ async function run() {
                         $push: { processedSessions: sessionId }
                     }
                     const updateLimit = await usersCollection.updateOne(query, update)
-                    
+
                 }
                 res.send(paymentData)
             }
         })
 
 
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+        app.get('/', (req, res) => {
+            res.send('Asset Server is running...');
+        });
+
+
+
+
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
 
 
@@ -483,4 +492,5 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.listen(PORT)
+app.listen(process.env.PORT)
+
