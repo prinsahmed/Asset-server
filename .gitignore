@@ -1,5 +1,4 @@
 .env
 node_modules
 .vercel.json
-.key-convert.js
-.asset-managemnet.json
+
