@@ -436,7 +436,6 @@ async function run() {
                 cancel_url: `${process.env.SITE_DOMAIN}/payment-cancel`,
             });
 
-
             res.send({ url: session.url })
         });
 
