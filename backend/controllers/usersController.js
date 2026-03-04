@@ -15,7 +15,6 @@ const employeeJoin = async (req, res) => {
 
 const requestedEmployees = async (req, res) => {
   const email = req.query.email;
-
   const query = {};
   if (email) {
     query.hrEmail = email;
@@ -107,6 +106,7 @@ const affiliationByCompany = async (req, res) => {
 
 const usersProfileUpdate = async (req, res) => {
   const email = req.query.email;
+  console.log(email)
   const userData = req.body;
   const query = {};
   if (email) {

@@ -4,7 +4,7 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 require("dotenv").config();
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = process.env.MONGODB_URI;
-console.log(uri);
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -17,11 +17,11 @@ let db;
 
 async function connectDB() {
   try {
-    await client.connect();
+    // await client.connect();
     db = client.db("assetDB");
-    console.log("Database collections initialized!");
+    // console.log("Database collections initialized!");
   } catch (error) {
-    console.error("DB connection error:", error);
+    // console.error("DB connection error:", error);
   }
 }
 

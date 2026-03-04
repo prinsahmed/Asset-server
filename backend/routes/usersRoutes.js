@@ -29,7 +29,7 @@ router.get("/employee-request", verifyHR, requestedEmployees);
 router.get("/employee-list", verifyHR, employees);
 router.delete("/employee-delete/:id", verifyHR, employeeDelete);
 router.put("/employee-company", verifyHR, affiliationByCompany);
-router.put("/profile-update", verifyHR, usersProfileUpdate);
+router.post("/profile-update", usersProfileUpdate);
 
 // user's data
 router.get("/user-data", verifyToken, getUsersData);
