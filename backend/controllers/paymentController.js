@@ -1,6 +1,5 @@
 const { getCollection } = require("../db/dbConfig");
 const { ObjectId } = require("mongodb");
-
 const stripe = require("stripe")(process.env.STRIPE_KEY);
 
 const checkOut = async (req, res) => {
