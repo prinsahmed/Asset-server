@@ -17,7 +17,7 @@ let db;
 
 async function connectDB() {
   try {
-    // await client.connect();
+    await client.connect();
     db = client.db("assetDB");
     // console.log("Database collections initialized!");
   } catch (error) {
