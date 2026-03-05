@@ -17,19 +17,19 @@ const {
   verifyHR,
 } = require("../middlewares/authMiddleware");
 
-router.use(verifyToken);
+
 
 // Employee
 router.post("/employee-join", verifyEmployee, employeeJoin);
 
 // HR
-router.put("/employee-approval/:id", verifyHR, employeeApproval);
-router.put("/employee-reject/:id", verifyHR, employeeRejection);
-router.get("/employee-request", verifyHR, requestedEmployees);
-router.get("/employee-list", verifyHR, employees);
-router.delete("/employee-delete/:id", verifyHR, employeeDelete);
-router.put("/employee-company", verifyHR, affiliationByCompany);
-router.post("/profile-update", usersProfileUpdate);
+router.put("/employee-approval/:id",verifyToken, verifyHR, employeeApproval);
+router.put("/employee-reject/:id",verifyToken, verifyHR, employeeRejection);
+router.get("/employee-request",verifyToken, verifyHR, requestedEmployees);
+router.get("/employee-list",verifyToken, verifyHR, employees);
+router.delete("/employee-delete/:id",verifyToken, verifyHR, employeeDelete);
+router.put("/employee-company",verifyToken, verifyHR, affiliationByCompany);
+router.post("/profile-update",verifyToken, usersProfileUpdate);
 
 // user's data
 router.get("/user-data", verifyToken, getUsersData);
