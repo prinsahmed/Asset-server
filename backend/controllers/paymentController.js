@@ -1,11 +1,11 @@
 const { getCollection } = require("../db/dbConfig");
-const { ObjectId } = require("mongodb");
+const { ObjectId, CURSOR_FLAGS } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_KEY);
 
 const checkOut = async (req, res) => {
   const { id, email } = req.body;
   if (!id || !email) return res.status(404).send({ message: "Not Found" });
-
+  
   const query = { _id: new ObjectId(id) };
   const packageData = await getCollection("packageCollection").findOne(query);
   const session = await stripe.checkout.sessions.create({
@@ -30,7 +30,8 @@ const checkOut = async (req, res) => {
     success_url: `${process.env.SITE_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.SITE_DOMAIN}/payment-cancel`,
   });
-
+  
+  
   res.send({ url: session.url });
 };
 
@@ -65,6 +66,7 @@ const paymentStatus = async (req, res) => {
         update,
       );
     }
+    
     res.send(paymentData);
   }
 };

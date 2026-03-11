@@ -54,7 +54,7 @@ const showAssets = async (req, res) => {
   if (search) {
     query2.productName = { $regex: search, $options: "i" };
   }
-  console.log(filter);
+
   if (filter && filter !== "All Types") {
     query2.productType = filter;
   }
